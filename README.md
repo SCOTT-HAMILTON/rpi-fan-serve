@@ -59,6 +59,11 @@ It depends on:
  - libdl
  - zlib
 
+```shell_session
+meson setup build .
+meson compile -C build -j4
+```
+
 ## License
 rpi-fan-serve is delivered as it is under the well known MIT License.
 
