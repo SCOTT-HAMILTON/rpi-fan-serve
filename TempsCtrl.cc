@@ -25,10 +25,10 @@ void TempsCtrl::handleTempsRequest(
 	try {
 		// Just to check if it's a valid unsigned integer.
 		intDayOffset = std::stoul(dayOffset, nullptr, 10);
-	} catch (std::invalid_argument) {
+	} catch (std::invalid_argument&) {
 		callback(jsonErrorResponse("Invalid day offset `"+dayOffset+"`."));
 		return;
-	} catch (std::out_of_range) {
+	} catch (std::out_of_range&) {
 		callback(jsonErrorResponse("Out of range day offset `"+dayOffset+"`."));
 		return;
 	}
@@ -89,11 +89,11 @@ inline bool extractMatches(const std::string& line, TempDataPoint& result) {
 			try {
 				auto tempInt = std::stoi(temp, nullptr, 10);
 				result.temp = tempInt;
-			} catch (std::invalid_argument) {
+			} catch (std::invalid_argument&) {
 				std::cerr << "[error] bad line, invalid argument temp: `" << temp
 					<< "` `"<< line << "`\n";
 				return false;
-			} catch (std::out_of_range) {
+			} catch (std::out_of_range&) {
 				std::cerr << "[error] bad line, out of range temp: `" << temp
 					<< "` `"<< line << "`\n";
 				return false;
@@ -105,11 +105,11 @@ inline bool extractMatches(const std::string& line, TempDataPoint& result) {
 			try {
 				auto deltaInt = std::stoi(delta.c_str(), nullptr, 10);
 				result.delta = deltaInt;
-			} catch (std::invalid_argument) {
+			} catch (std::invalid_argument&) {
 				std::cerr << "[error] bad line, invalid argument delta: `" << delta
 					<< "` `"<< line << "`\n";
 				return false;
-			} catch (std::out_of_range) {
+			} catch (std::out_of_range&) {
 				std::cerr << "[error] bad line, out of range delta: `" << delta
 					<< "` `"<< line << "`\n";
 				return false;
@@ -121,11 +121,11 @@ inline bool extractMatches(const std::string& line, TempDataPoint& result) {
 			try {
 				auto levelInt = std::stoi(level, nullptr, 10);
 				result.level = levelInt;
-			} catch (std::invalid_argument) {
+			} catch (std::invalid_argument&) {
 				std::cerr << "[error] bad line, invalid argument level: `" << level
 					<< "` `"<< line << "`\n";
 				return false;
-			} catch (std::out_of_range) {
+			} catch (std::out_of_range&) {
 				std::cerr << "[error] bad line, out of range level: `" << level
 					<< "` `"<< line << "`\n";
 				return false;

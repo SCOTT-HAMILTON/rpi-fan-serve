@@ -27,10 +27,10 @@ int main(int argc, const char* argv[]) {
 	size_t port = 0;
 	try {
 		port = std::stoul(portStr, nullptr, 10);
-	} catch (std::invalid_argument) {
+	} catch (std::invalid_argument&) {
 		std::cerr << "[error] invalid port: `" << portStr << "`\n";
 		return 1;
-	} catch (std::out_of_range) {
+	} catch (std::out_of_range&) {
 		std::cerr << "[error] out of range port: `" << portStr << "`\n";
 		return 1;
 	}
