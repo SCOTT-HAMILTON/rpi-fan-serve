@@ -3,6 +3,8 @@
 #include <fstream>
 #include <regex>
 #include <filesystem>
+#include <vector>
+#include <future>
 
 Json::Value jsonError(const std::string& errorMsg) {
 	Json::Value value;
@@ -134,7 +136,16 @@ inline bool extractMatches(const std::string& line, TempDataPoint& result) {
 		return true;
 	}
 }
-
+Json::Value linesChunk2TempsChunk(const std::vector<std::string>& linesChunk) {
+	Json::Value chunk_temps(Json::arrayValue);
+	for (const auto& line : linesChunk) {
+		TempDataPoint data;
+		if (extractMatches(line, data)) {
+			chunk_temps.append(TempDataPoint2Json(data));
+		}
+	}
+	return chunk_temps; 
+}
 Json::Value TempsCtrl::logFile2Json(const std::string& file) {
 	std::ifstream ifs(file);
     if(!ifs) {
@@ -143,17 +154,37 @@ Json::Value TempsCtrl::logFile2Json(const std::string& file) {
 	ifs.seekg(0, std::ios::end);
 	auto end = ifs.tellg();
 	ifs.seekg(0, std::ios::beg);
-    auto size = std::size_t(end - ifs.tellg());
-	Json::Value temps(Json::arrayValue);
-    if (size == 0) {
+    auto chunk_size = std::size_t(end - ifs.tellg())/Config::maxjobs;
+    if (chunk_size == 0) {
 		std::cerr << "[error] file " << file << " is empty\n";
         return jsonError("Log file is empty."); 
 	} else {
+		size_t currentChunkSize = 0;
+		Json::Value temps(Json::arrayValue);
+		std::vector<std::string> currentChunk;
+		std::vector<std::future<Json::Value>> tasks;
+		currentChunk.reserve(chunk_size/50);
 		for(std::string line; getline(ifs, line );) {
-			TempDataPoint data;
-			if (extractMatches(line, data)) {
-				/* std::cerr << "line: " << data << '\n'; */
-				temps.append(TempDataPoint2Json(data));
+			currentChunkSize += line.size();
+			currentChunk.push_back(line);
+			if (currentChunkSize >= chunk_size) {
+				tasks.emplace_back(std::async(std::launch::async, [currentChunk]{
+					return linesChunk2TempsChunk(currentChunk);
+				}));
+				currentChunkSize = 0;
+				currentChunk.clear();
+			}
+		}
+		if (currentChunk.size() > 0) {
+			tasks.emplace_back(std::async(std::launch::async, [currentChunk]{
+				return linesChunk2TempsChunk(currentChunk);
+			}));
+		}
+		for (auto& task : tasks) {
+			task.wait();
+			auto chunk_temps = task.get();
+			for (const auto& temp : chunk_temps) {
+				temps.append(temp);
 			}
 		}
 		return temps;
