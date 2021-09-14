@@ -76,7 +76,7 @@ inline Json::Value TempDataPoint2Json(const TempDataPoint& data) {
 }
 inline bool extractMatches(const std::string& line, TempDataPoint& result) {
 	const std::regex dateRegex(
-		"^([0-9]{2}/){2}[0-9]{2} [0-9]{2}:[0-9]{2}");
+		"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z)?");
 	const std::regex tempRegex("with [0-9]*°C");
 	const std::regex deltaRegex("Δ[0-9]*°C");
 	const std::regex levelRegex("level is [0-9]*");
