@@ -34,18 +34,14 @@ void TempsCtrl::handleTempsRequest(
 		callback(jsonErrorResponse("Out of range day offset `"+dayOffset+"`."));
 		return;
 	}
-	std::string logFilePath(Config::logFilePath);
-	if (intDayOffset > 0) {
-		logFilePath += "."+dayOffset;
-	}
-	if (!std::filesystem::exists(logFilePath)) {
-		callback(jsonErrorResponse("Log file "+dayOffset+" doesn't exist"));
-		return;
-	} else {
+	auto logFilePath = offset2LogFilePath(intDayOffset);
+	if (logFilePath != "") {
 		auto temps = logFile2Json(logFilePath);
 		std::cerr << "[log] requested day offset: " << dayOffset << '\n';
 		auto resp = HttpResponse::newHttpJsonResponse(temps);
 		callback(resp);
+	} else {
+		callback(jsonErrorResponse("Log file "+dayOffset+" doesn't exist"));
 	}
 }
 
@@ -189,4 +185,28 @@ Json::Value TempsCtrl::logFile2Json(const std::string& file) {
 		}
 		return temps;
 	}
+}
+
+std::string TempsCtrl::offset2LogFilePath(size_t dayOffset) {
+	std::string logFilePath(Config::logFilePath);
+	if (dayOffset > 0) {
+		logFilePath += "."+std::to_string(dayOffset);
+	}
+	return (std::filesystem::exists(logFilePath))?logFilePath:"";
+}
+
+void TempsCtrl::handleAllTempsRequest(
+		const HttpRequestPtr &req,
+		std::function<void (const HttpResponsePtr &)> &&callback) const
+{
+
+	Json::Value alltemps(Json::arrayValue);
+	for (auto offset = 0; offset < 7; ++offset) {
+		auto logFile = offset2LogFilePath(offset);
+		if (logFile != "") {
+			auto temps = logFile2Json(logFile);
+			alltemps.append(temps);
+		}
+	}
+	callback(HttpResponse::newHttpJsonResponse(alltemps));
 }
