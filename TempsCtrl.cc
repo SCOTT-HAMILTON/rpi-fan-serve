@@ -6,6 +6,21 @@
 #include <vector>
 #include <future>
 
+TempsCtrl::TempsCtrl() :
+	drogon::HttpController<TempsCtrl>(),
+	cacheTimer()
+{
+	cache.creationEpochHours = 0;
+	cacheTimer.setInterval([&]() {
+		if (isCacheExpired()) {
+			updateCache();
+		} else {
+			std::cerr << "[log] timer update disabled, cache is still valid.";
+		}
+	}, 1'000*1'800);
+	updateCache();
+}
+
 Json::Value jsonError(const std::string& errorMsg) {
 	Json::Value value;
 	value["type"] = "Error";
@@ -195,18 +210,52 @@ std::string TempsCtrl::offset2LogFilePath(size_t dayOffset) {
 	return (std::filesystem::exists(logFilePath))?logFilePath:"";
 }
 
-void TempsCtrl::handleAllTempsRequest(
-		const HttpRequestPtr &req,
-		std::function<void (const HttpResponsePtr &)> &&callback) const
-{
-
-	Json::Value alltemps(Json::arrayValue);
+void TempsCtrl::updateCache() {
+    std::lock_guard<std::mutex> guard(cacheMutex);
+	std::cerr << "[log] cache is expired, updating...\n";
 	for (auto offset = 0; offset < 7; ++offset) {
 		auto logFile = offset2LogFilePath(offset);
 		if (logFile != "") {
 			auto temps = logFile2Json(logFile);
-			alltemps.append(temps);
+			cache.data[offset] = temps;
+		} else {
+			cache.data[offset] = Json::Value(Json::arrayValue);
 		}
 	}
+	std::cerr << "[log] cache updated.\n";
+	auto currentEpoch = std::chrono::duration_cast<std::chrono::hours>(
+			std::chrono::system_clock::now().time_since_epoch()).count();
+	cache.creationEpochHours = currentEpoch;
+}
+
+void TempsCtrl::handleAllTempsRequest(
+		const HttpRequestPtr &req,
+		std::function<void (const HttpResponsePtr &)> &&callback)
+{
+	Json::Value alltemps(Json::arrayValue);
+	if (isCacheExpired()) {
+		updateCache();
+	} else {
+		std::cerr << "[log] cache is up to date\n";
+	}
+	std::lock_guard<std::mutex> guard(cacheMutex);
+	for (const auto& temps : cache.data) {
+		alltemps.append(temps);
+	}
+	std::cerr << "[log] sending answer...\n";
 	callback(HttpResponse::newHttpJsonResponse(alltemps));
+}
+
+bool TempsCtrl::isCacheExpired() const
+{
+	auto currentEpoch = std::chrono::duration_cast<std::chrono::hours>(
+			std::chrono::system_clock::now().time_since_epoch()).count();
+	auto dayStart = std::chrono::duration_cast<std::chrono::hours>(
+		std::chrono::floor<Days>(std::chrono::system_clock::now())
+		.time_since_epoch()).count();
+	if (cache.creationEpochHours <= dayStart + 10) {
+		return true;
+	} else {
+		return (currentEpoch - cache.creationEpochHours) >= 2;
+	}
 }
