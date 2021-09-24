@@ -14,7 +14,7 @@ struct TempDataPoint {
 
 struct DaysDataCache {
 	unsigned long creationEpochHours;
-	std::array<Json::Value, 6> data;
+	std::array<Json::Value, 7> data;
 };
 
 class TempsCtrl:public drogon::HttpController<TempsCtrl>

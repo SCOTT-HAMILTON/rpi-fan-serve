@@ -1,24 +1,28 @@
 #include "TempsCtrl.h"
 #include "SharedConfig.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <fstream>
 #include <regex>
 #include <filesystem>
 #include <vector>
 #include <future>
+#include <chrono>
 
 TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
 	cacheTimer()
 {
 	cache.creationEpochHours = 0;
+	updateCache();
 	cacheTimer.setInterval([&]() {
 		if (isCacheExpired()) {
 			updateCache();
 		} else {
-			std::cerr << "[log] timer update disabled, cache is still valid.";
+			std::cerr << "[log] timer update disabled, cache is still valid.\n";
 		}
 	}, 1'000*1'800);
-	updateCache();
 }
 
 Json::Value jsonError(const std::string& errorMsg) {
@@ -250,10 +254,16 @@ bool TempsCtrl::isCacheExpired() const
 {
 	auto currentEpoch = std::chrono::duration_cast<std::chrono::hours>(
 			std::chrono::system_clock::now().time_since_epoch()).count();
-	auto dayStart = std::chrono::duration_cast<std::chrono::hours>(
-		std::chrono::floor<Days>(std::chrono::system_clock::now())
-		.time_since_epoch()).count();
-	if (cache.creationEpochHours <= dayStart + 10) {
+	auto activeLogFile = offset2LogFilePath(0);
+	struct stat buf;
+	stat(activeLogFile.c_str(), &buf);
+	auto activeLogFileCreationTime =
+		std::chrono::duration_cast<std::chrono::hours>(
+		std::chrono::system_clock::from_time_t(
+				buf.st_ctime
+		).time_since_epoch()
+	).count();
+	if (cache.creationEpochHours < activeLogFileCreationTime) {
 		return true;
 	} else {
 		return (currentEpoch - cache.creationEpochHours) >= 2;
