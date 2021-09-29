@@ -14,10 +14,10 @@ TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
 	cacheTimer()
 {
-	cache.creationEpochHours = 0;
+	cache.creationEpochMinutes = 0;
 	updateCache();
 	cacheTimer.setInterval([&]() {
-		if (isCacheExpired()) {
+		if (isCacheNeedingUpdate()) {
 			updateCache();
 		} else {
 			std::cerr << "[log] timer update disabled, cache is still valid.\n";
@@ -227,9 +227,9 @@ void TempsCtrl::updateCache() {
 		}
 	}
 	std::cerr << "[log] cache updated.\n";
-	auto currentEpoch = std::chrono::duration_cast<std::chrono::hours>(
+	auto currentEpoch = std::chrono::duration_cast<std::chrono::minutes>(
 			std::chrono::system_clock::now().time_since_epoch()).count();
-	cache.creationEpochHours = currentEpoch;
+	cache.creationEpochMinutes = currentEpoch;
 }
 
 void TempsCtrl::handleAllTempsRequest(
@@ -252,20 +252,39 @@ void TempsCtrl::handleAllTempsRequest(
 
 bool TempsCtrl::isCacheExpired() const
 {
-	auto currentEpoch = std::chrono::duration_cast<std::chrono::hours>(
+	auto currentEpoch = std::chrono::duration_cast<std::chrono::minutes>(
 			std::chrono::system_clock::now().time_since_epoch()).count();
 	auto activeLogFile = offset2LogFilePath(0);
 	struct stat buf;
 	stat(activeLogFile.c_str(), &buf);
 	auto activeLogFileCreationTime =
-		std::chrono::duration_cast<std::chrono::hours>(
+		std::chrono::duration_cast<std::chrono::minutes>(
 		std::chrono::system_clock::from_time_t(
 				buf.st_ctime
 		).time_since_epoch()
 	).count();
-	if (cache.creationEpochHours < activeLogFileCreationTime) {
+	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
 		return true;
 	} else {
-		return (currentEpoch - cache.creationEpochHours) >= 2;
+		return (currentEpoch - cache.creationEpochMinutes) >= 2*60;
+	}
+}
+bool TempsCtrl::isCacheNeedingUpdate() const
+{
+	auto currentEpoch = std::chrono::duration_cast<std::chrono::minutes>(
+			std::chrono::system_clock::now().time_since_epoch()).count();
+	auto activeLogFile = offset2LogFilePath(0);
+	struct stat buf;
+	stat(activeLogFile.c_str(), &buf);
+	auto activeLogFileCreationTime =
+		std::chrono::duration_cast<std::chrono::minutes>(
+		std::chrono::system_clock::from_time_t(
+				buf.st_ctime
+		).time_since_epoch()
+	).count();
+	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
+		return true;
+	} else {
+		return (currentEpoch >= cache.creationEpochMinutes+2*60-45);
 	}
 }

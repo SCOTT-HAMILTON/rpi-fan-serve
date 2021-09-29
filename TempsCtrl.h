@@ -13,7 +13,7 @@ struct TempDataPoint {
 };
 
 struct DaysDataCache {
-	unsigned long creationEpochHours;
+	unsigned long creationEpochMinutes;
 	std::array<Json::Value, 7> data;
 };
 
@@ -31,6 +31,7 @@ public:
 	void handleAllTempsRequest(const HttpRequestPtr &req,
 			std::function<void (const HttpResponsePtr &)> &&callback);
 	bool isCacheExpired() const;
+	bool isCacheNeedingUpdate() const;
 
 private:
 	static Json::Value logFile2Json(const std::string& file);
