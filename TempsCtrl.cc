@@ -1,7 +1,8 @@
 #include "TempsCtrl.h"
 #include "SharedConfig.hpp"
-#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <fstream>
 #include <regex>
@@ -217,7 +218,28 @@ std::string TempsCtrl::offset2LogFilePath(size_t dayOffset) {
 	if (dayOffset > 0) {
 		logFilePath += "."+std::to_string(dayOffset);
 	}
-	return (std::filesystem::exists(logFilePath))?logFilePath:"";
+	if (std::filesystem::exists(logFilePath)) {
+		return std::filesystem::absolute(
+			std::filesystem::path(logFilePath)
+		);
+	} else {
+		return "";
+	}
+}
+
+unsigned long TempsCtrl::getActiveLogFileCreationTimeMinutes() const {
+	auto activeLogFile = offset2LogFilePath(0);
+	struct statx buf;
+	statx(
+		AT_FDCWD,
+		activeLogFile.c_str(),
+		AT_STATX_SYNC_AS_STAT|AT_SYMLINK_NOFOLLOW,
+		STATX_ALL, &buf);
+	auto seconds = std::chrono::seconds(buf.stx_btime.tv_sec);
+	std::chrono::time_point<std::chrono::system_clock> t(seconds);
+	return std::chrono::duration_cast<std::chrono::minutes>(
+		t.time_since_epoch()
+	).count();
 }
 
 void TempsCtrl::updateCache() {
@@ -271,15 +293,7 @@ bool TempsCtrl::isCacheExpired() const
 {
 	auto currentEpoch = std::chrono::duration_cast<std::chrono::minutes>(
 			std::chrono::system_clock::now().time_since_epoch()).count();
-	auto activeLogFile = offset2LogFilePath(0);
-	struct stat buf;
-	stat(activeLogFile.c_str(), &buf);
-	auto activeLogFileCreationTime =
-		std::chrono::duration_cast<std::chrono::minutes>(
-		std::chrono::system_clock::from_time_t(
-				buf.st_ctime
-		).time_since_epoch()
-	).count();
+	auto activeLogFileCreationTime = getActiveLogFileCreationTimeMinutes();
 	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
 		std::cerr << "[debug] cache expired, log files have been rotated at "
 			<< formatEpochMinutes(activeLogFileCreationTime)
@@ -309,15 +323,7 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 {
 	auto currentEpoch = std::chrono::duration_cast<std::chrono::minutes>(
 			std::chrono::system_clock::now().time_since_epoch()).count();
-	auto activeLogFile = offset2LogFilePath(0);
-	struct stat buf;
-	stat(activeLogFile.c_str(), &buf);
-	auto activeLogFileCreationTime =
-		std::chrono::duration_cast<std::chrono::minutes>(
-		std::chrono::system_clock::from_time_t(
-				buf.st_ctime
-		).time_since_epoch()
-	).count();
+	auto activeLogFileCreationTime = getActiveLogFileCreationTimeMinutes();
 	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
 		std::cerr << "[debug] cache needs update, log files have been rotated at "
 			<< formatEpochMinutes(activeLogFileCreationTime)

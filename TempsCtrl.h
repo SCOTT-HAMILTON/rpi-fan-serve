@@ -36,6 +36,7 @@ public:
 private:
 	static Json::Value logFile2Json(const std::string& file);
 	static std::string offset2LogFilePath(size_t dayOffset);
+	unsigned long getActiveLogFileCreationTimeMinutes() const;
 	DaysDataCache cache;
 	std::mutex cacheMutex;
 	Timer cacheTimer;
