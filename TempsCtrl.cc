@@ -9,6 +9,11 @@
 #include <vector>
 #include <future>
 #include <chrono>
+#include <iomanip>
+#include <ctime>
+#include <sstream>
+
+static constexpr auto cache_expiration_time_minutes = 30;
 
 TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
@@ -18,11 +23,12 @@ TempsCtrl::TempsCtrl() :
 	updateCache();
 	cacheTimer.setInterval([&]() {
 		if (isCacheNeedingUpdate()) {
+			std::cerr << "[log] timer triggered cache update.\n";
 			updateCache();
 		} else {
 			std::cerr << "[log] timer update disabled, cache is still valid.\n";
 		}
-	}, 1'000*1'800);
+	}, 1'000*60*cache_expiration_time_minutes/12);
 }
 
 Json::Value jsonError(const std::string& errorMsg) {
@@ -238,6 +244,7 @@ void TempsCtrl::handleAllTempsRequest(
 {
 	Json::Value alltemps(Json::arrayValue);
 	if (isCacheExpired()) {
+		std::cerr << "[log] request triggered cache update.\n";
 		updateCache();
 	} else {
 		std::cerr << "[log] cache is up to date\n";
@@ -248,6 +255,16 @@ void TempsCtrl::handleAllTempsRequest(
 	}
 	std::cerr << "[log] sending answer...\n";
 	callback(HttpResponse::newHttpJsonResponse(alltemps));
+}
+
+std::string formatEpochMinutes(unsigned long minutes) {
+    const auto minutes_duration = std::chrono::minutes(minutes);
+	std::chrono::time_point<std::chrono::system_clock> t(minutes_duration);
+    const std::time_t t_c = std::chrono::system_clock::to_time_t(t);
+	std::stringstream s;
+    s.imbue(std::locale(""));
+    s << std::put_time(std::localtime(&t_c), "%F %T");
+	return s.str();
 }
 
 bool TempsCtrl::isCacheExpired() const
@@ -264,9 +281,28 @@ bool TempsCtrl::isCacheExpired() const
 		).time_since_epoch()
 	).count();
 	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
+		std::cerr << "[debug] cache expired, log files have been rotated at "
+			<< formatEpochMinutes(activeLogFileCreationTime)
+			<< " and cache last update was at "
+			<< formatEpochMinutes(cache.creationEpochMinutes)
+			<< ".\n";
 		return true;
 	} else {
-		return (currentEpoch - cache.creationEpochMinutes) >= 2*60;
+		if (currentEpoch >= cache.creationEpochMinutes+cache_expiration_time_minutes) {
+			std::cerr << "[debug] ["
+				<< formatEpochMinutes(currentEpoch)
+				<< "] cache is expired, its last update was at "
+				<< formatEpochMinutes(cache.creationEpochMinutes)
+				<< ".\n";
+			return true;
+		} else {
+			std::cerr << "[debug] ["
+				<< formatEpochMinutes(currentEpoch)
+				<< "] cache is still valid, its last update was at "
+				<< formatEpochMinutes(cache.creationEpochMinutes)
+				<< ".\n";
+			return false;
+		}
 	}
 }
 bool TempsCtrl::isCacheNeedingUpdate() const
@@ -283,8 +319,29 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 		).time_since_epoch()
 	).count();
 	if (cache.creationEpochMinutes < activeLogFileCreationTime) {
+		std::cerr << "[debug] cache needs update, log files have been rotated at "
+			<< formatEpochMinutes(activeLogFileCreationTime)
+			<< " and cache last update was at "
+			<< formatEpochMinutes(cache.creationEpochMinutes)
+			<< ".\n";
 		return true;
 	} else {
-		return (currentEpoch >= cache.creationEpochMinutes+2*60-45);
+		constexpr auto cache_update_time_minutes = 
+			cache_expiration_time_minutes/2;
+		if (currentEpoch >= cache.creationEpochMinutes+cache_update_time_minutes) {
+			std::cerr << "[debug] ["
+				<< formatEpochMinutes(currentEpoch)
+				<< "] cache needs update, its last update was at "
+				<< formatEpochMinutes(cache.creationEpochMinutes)
+				<< ".\n";
+			return true;
+		} else {
+			std::cerr << "[debug] ["
+				<< formatEpochMinutes(currentEpoch)
+				<< "] cache doesn't need any update, its last update was at "
+				<< formatEpochMinutes(cache.creationEpochMinutes)
+				<< ".\n";
+			return false;
+		}
 	}
 }
