@@ -14,7 +14,7 @@
 #include <ctime>
 #include <sstream>
 
-static constexpr auto cache_expiration_time_minutes = 30;
+static constexpr auto cache_expiration_time_minutes = 2*60;
 
 TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
@@ -29,7 +29,7 @@ TempsCtrl::TempsCtrl() :
 		} else {
 			std::cerr << "[log] timer update disabled, cache is still valid.\n";
 		}
-	}, 1'000*60*cache_expiration_time_minutes/12);
+	}, 1'000*60*cache_expiration_time_minutes/5);
 }
 
 Json::Value jsonError(const std::string& errorMsg) {
