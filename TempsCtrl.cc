@@ -19,11 +19,13 @@ TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
 	cacheTimer(),
 	/* m_cacheLifeExpectancySeconds(2*3600) */
-	m_cacheLifeExpectancySeconds(1'000)
+	m_cacheLifeExpectancySeconds(1'000),
+	m_ctrlDbusServer(*this)
 {
 	cache.creationEpochMinutes = 0;
 	updateCache();
 	setCacheTimer();
+	m_ctrlDbusServer.start();
 }
 
 Json::Value jsonError(const std::string& errorMsg) {

@@ -29,6 +29,7 @@ in with drogon1_7_2Pkgs; mkShell {
     localShamilton.sdbusplus-tools
     cppzmq
     zeromq
+    tbb
     systemd
   ];
   shellHook = ''
@@ -42,6 +43,9 @@ in with drogon1_7_2Pkgs; mkShell {
     run(){
       ./build/rpi-fan-serve -p 8888 -l test/rpi-fan/rpi-fan.log -j 4
     }
+    run_dbus(){
+      ./build/rpi-fan-serve --dbus
+    }
     compile(){
       meson compile -C build
     }
@@ -49,6 +53,14 @@ in with drogon1_7_2Pkgs; mkShell {
       gdb ./build/rpi-fan-serve \
         -ex 'handle SIGINT pass' \
         -ex 'run -p 8888 -l test/rpi-fan/rpi-fan.log -j 4'
+    }
+    send_dbus(){
+      dbus-send --session --dest=org.scotthamilton.RpiFanServe \
+        --print-reply /org/scotthamilton/rpifanserver \
+        org.freedesktop.DBus.Properties.Set \
+          string:org.scotthamilton.RpiFanServe \
+          string:CacheLifeExpectancy \
+          variant:int64:$1
     }
   '';
 }

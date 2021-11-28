@@ -1,6 +1,7 @@
 #pragma once
 #include <drogon/HttpController.h>
 #include "timercpp/timercpp.h"
+#include "zmq_dbus_server.hpp"
 
 using namespace drogon;
 using Days = std::chrono::duration<long, std::ratio<86400>>;
@@ -17,8 +18,20 @@ struct DaysDataCache {
 	std::array<Json::Value, 7> data;
 };
 
-class TempsCtrl:public drogon::HttpController<TempsCtrl>
+class TempsCtrl: public drogon::HttpController<TempsCtrl>
 {
+	class CtrlDbusServer: public ZmqDbusServer {
+	public:
+		CtrlDbusServer(TempsCtrl& parent) : m_parent(parent) {}
+	protected:
+		void receiveCallback(const std::string& msg) override {
+		}
+		void trySendCallback(zmq::socket_t& socket) override {
+			/* std::cerr << "[debug] sending nothing but can access " << m_parent.m_cacheLifeExpectancySeconds << "\n"; */
+		}
+		TempsCtrl& m_parent;
+	};
+
 public:
 	TempsCtrl();
 	METHOD_LIST_BEGIN
@@ -43,4 +56,5 @@ private:
 	std::mutex cacheMutex;
 	Timer cacheTimer;
 	unsigned long m_cacheLifeExpectancySeconds;
+	CtrlDbusServer m_ctrlDbusServer;
 };

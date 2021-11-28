@@ -17,10 +17,12 @@ public:
     {}
 
 protected:
-	void run() const {
+	virtual void trySendCallback(zmq::socket_t& socket) = 0;
+	virtual void receiveCallback(const std::string& msg) = 0;
+	void run() {
 		zmq::context_t ctx;
 		zmq::socket_t sock(ctx, zmq::socket_type::pair);
-		sock.connect("tcp://localhost:" + std::to_string(ZmqConstants::PORT));
+		sock.connect("tcp://localhost:" + std::to_string(ZmqConstants::DBUS_PORT));
 		zmq::message_t msg;
 		sock.send(zmq::str_buffer("hello world from client!"), zmq::send_flags::dontwait);
 		while (m_running) {
@@ -28,7 +30,9 @@ protected:
 			zmq::recv_result_t r = sock.recv(msg, zmq::recv_flags::dontwait);
 			if (r) {
 				std::cerr << "[log|ZMQ-DBUS-client] received: `" << msg << "`\n";
+				receiveCallback(msg.to_string());
 			} else {
+				trySendCallback(sock);
 				sleep_seconds(1);
 			}
 		}

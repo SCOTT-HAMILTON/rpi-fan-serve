@@ -117,10 +117,7 @@ int main(int argc, const char* argv[]) {
 		Config::port = port;
 		Config::logFilePath = logFilePath;
 		Config::maxjobs = maxjobs;
-		ZmqDbusServer zmqDbusServer;
-		zmqDbusServer.start();
 		drogon::app().addListener("0.0.0.0", Config::port).run();
-		zmqDbusServer.stop();
 	} else {
 		{
 			struct sigaction sa;
@@ -138,14 +135,14 @@ int main(int argc, const char* argv[]) {
 			}
 		}
 		DbusServer dbusServer;
-		ZmqDbusClient zmqDbusClient;
+		/* ZmqDbusClient zmqDbusClient; */
 		dbusServer.start();
-		zmqDbusClient.start();
+		/* zmqDbusClient.start(); */
 		while (dbus_running.load()) {
 			sleep_seconds(1);
 		}
 		dbusServer.stop();
-		zmqDbusClient.stop();
+		/* zmqDbusClient.stop(); */
 	}
 
     return 0;

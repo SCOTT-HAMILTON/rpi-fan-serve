@@ -10,6 +10,7 @@ libdl = meson.get_compiler('cpp').find_library('dl', required: true)
 zlib = meson.get_compiler('cpp').find_library('z', required: true)
 sdbusplus = dependency('sdbusplus', required: true)
 cppzmq = dependency('cppzmq', required: true)
+tbb = dependency('tbb', required: true)
 drogon = dependency('Drogon', method: 'cmake',
   modules: ['Drogon::Drogon'],required: true, static: false)
 
@@ -40,6 +41,7 @@ executable('rpi-fan-serve', dbus_source_files + source_files,
 	argparse,
 	sdbusplus,
 	cppzmq,
+	tbb
   ],
   install : true)
 

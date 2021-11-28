@@ -31,7 +31,7 @@ public:
 	}
 
 protected:
-	virtual void run() const = 0;
+	virtual void run() = 0;
 	std::atomic_bool m_running;
 	std::unique_ptr<std::thread> m_thread;
 };
