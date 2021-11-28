@@ -8,6 +8,8 @@ libbrotlienc = dependency('libbrotlienc', required: true)
 uuid = dependency('uuid', required: true)
 libdl = meson.get_compiler('cpp').find_library('dl', required: true)
 zlib = meson.get_compiler('cpp').find_library('z', required: true)
+sdbusplus = dependency('sdbusplus', required: true)
+cppzmq = dependency('cppzmq', required: true)
 drogon = dependency('Drogon', method: 'cmake',
   modules: ['Drogon::Drogon'],required: true, static: false)
 
@@ -18,9 +20,35 @@ if not argparse.found()
   argparse = argparse_proj.dependency('argparse')
 endif
 
-executable('rpi-fan-serve', 'main.cc', 'TempsCtrl.cc',
-  dependencies : [ zlib, libdl, uuid, libbrotlienc, libbrotlidec, sqlite3, openssl, cares, drogon, argparse ],
+source_files = [ 'main.cc', 'TempsCtrl.cc' ]
+dbus_source_files = [
+  'org/scotthamilton/RpiFanServe/error.cpp',
+  'org/scotthamilton/RpiFanServe/server.cpp'
+]
+
+executable('rpi-fan-serve', dbus_source_files + source_files,
+  dependencies : [
+	zlib,
+	libdl,
+	uuid,
+	libbrotlienc,
+	libbrotlidec,
+	sqlite3,
+	openssl,
+	cares,
+	drogon,
+	argparse,
+	sdbusplus,
+	cppzmq,
+  ],
   install : true)
 
-# install_data('docs/FakeMicWavPlayer.1',
-#   install_dir: get_option('datadir')+'/man/man1')
+datadir = get_option('datadir')
+conf_data = configuration_data()
+conf_data.set('bindir', get_option('prefix') / get_option('bindir'))
+desktop_file = configure_file(
+	  input : 'dbus/org.scotthamilton.rpifanserve.service.in',
+	  output : 'org.scotthamilton.rpifanserve.service',
+	  configuration : conf_data,
+	  install: true,
+	  install_dir: join_paths(datadir, 'dbus-1', 'services'))

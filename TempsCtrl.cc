@@ -13,23 +13,17 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
-
-static constexpr auto cache_expiration_time_minutes = 2*60;
+#include <algorithm>
 
 TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
-	cacheTimer()
+	cacheTimer(),
+	/* m_cacheLifeExpectancySeconds(2*3600) */
+	m_cacheLifeExpectancySeconds(1'000)
 {
 	cache.creationEpochMinutes = 0;
 	updateCache();
-	cacheTimer.setInterval([&]() {
-		if (isCacheNeedingUpdate()) {
-			std::cerr << "[log] timer triggered cache update.\n";
-			updateCache();
-		} else {
-			std::cerr << "[log] timer update disabled, cache is still valid.\n";
-		}
-	}, 1'000*60*cache_expiration_time_minutes/5);
+	setCacheTimer();
 }
 
 Json::Value jsonError(const std::string& errorMsg) {
@@ -242,6 +236,22 @@ unsigned long TempsCtrl::getActiveLogFileCreationTimeMinutes() const {
 	).count();
 }
 
+void TempsCtrl::setCacheTimer() {
+	unsigned long cacheTimerInterval =
+			std::max(static_cast<unsigned long>(
+						m_cacheLifeExpectancySeconds*0.005f*1'000.0f),
+					10'000UL);
+	std::cerr << "[debug] cacheTimerIntervalMs=" << cacheTimerInterval << '\n';
+	cacheTimer.setInterval([&]() {
+		if (isCacheNeedingUpdate()) {
+			std::cerr << "[log] timer triggered cache update.\n";
+			updateCache();
+		} else {
+			std::cerr << "[log] timer update disabled, cache is still valid.\n";
+		}
+	}, cacheTimerInterval);
+}
+
 void TempsCtrl::updateCache() {
     std::lock_guard<std::mutex> guard(cacheMutex);
 	std::cerr << "[log] cache is expired, updating...\n";
@@ -302,7 +312,7 @@ bool TempsCtrl::isCacheExpired() const
 			<< ".\n";
 		return true;
 	} else {
-		if (currentEpoch >= cache.creationEpochMinutes+cache_expiration_time_minutes) {
+		if (currentEpoch >= cache.creationEpochMinutes+m_cacheLifeExpectancySeconds/60) {
 			std::cerr << "[debug] ["
 				<< formatEpochMinutes(currentEpoch)
 				<< "] cache is expired, its last update was at "
@@ -332,8 +342,8 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 			<< ".\n";
 		return true;
 	} else {
-		constexpr auto cache_update_time_minutes = 
-			cache_expiration_time_minutes/2;
+		unsigned long cache_update_time_minutes = (m_cacheLifeExpectancySeconds/60L)*0.95;
+		std::cerr << "[debug] cache_update_time_minutes = " << cache_update_time_minutes << '\n';
 		if (currentEpoch >= cache.creationEpochMinutes+cache_update_time_minutes) {
 			std::cerr << "[debug] ["
 				<< formatEpochMinutes(currentEpoch)
@@ -350,4 +360,12 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 			return false;
 		}
 	}
+}
+
+void TempsCtrl::setCacheLifeExpectancy(int seconds) {
+	std::cerr << "[log] changed cache life expectancy "
+			  << m_cacheLifeExpectancySeconds << " -> "
+			  << seconds << '\n';
+	m_cacheLifeExpectancySeconds = seconds;
+	setCacheTimer();
 }

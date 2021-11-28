@@ -32,12 +32,15 @@ public:
 			std::function<void (const HttpResponsePtr &)> &&callback);
 	bool isCacheExpired() const;
 	bool isCacheNeedingUpdate() const;
+	void setCacheLifeExpectancy(int seconds);
 
 private:
 	static Json::Value logFile2Json(const std::string& file);
 	static std::string offset2LogFilePath(size_t dayOffset);
 	unsigned long getActiveLogFileCreationTimeMinutes() const;
+	void setCacheTimer();
 	DaysDataCache cache;
 	std::mutex cacheMutex;
 	Timer cacheTimer;
+	unsigned long m_cacheLifeExpectancySeconds;
 };

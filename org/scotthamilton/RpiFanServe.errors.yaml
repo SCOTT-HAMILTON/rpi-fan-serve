@@ -1,0 +1,3 @@
+- name: InvalidCacheLifeExpectancy 
+  description: >
+    An invalid cache life expectancy argument was provided.

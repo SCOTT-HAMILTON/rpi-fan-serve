@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.scotthamilton.RpiFanServe
+Exec=@bindir@/rpi-fan-serve --dbus

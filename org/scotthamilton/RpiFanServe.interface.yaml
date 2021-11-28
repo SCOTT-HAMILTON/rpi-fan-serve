@@ -1,0 +1,14 @@
+description: >
+    An interface to control the rpi-fan-serve service.
+properties:
+    - name: CacheLifeExpectancy
+      type: int64
+      default: 0
+      description: >
+        The duration in seconds the cache stays valid after an update.
+      errors:
+        - self.Error.InvalidCacheLifeExpectancy
+signals:
+    - name: CacheUpdated
+      description: >
+        Signal indicating the cache was updated.
