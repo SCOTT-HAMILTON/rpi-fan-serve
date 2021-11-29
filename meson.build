@@ -1,4 +1,4 @@
-project('rpi-fan-serve', 'cpp', default_options : ['cpp_std=c++17'])
+project('rpi-fan-serve', 'cpp')
 
 cares = dependency('libcares', required: true)
 openssl = dependency('openssl', required: true)
@@ -11,6 +11,7 @@ zlib = meson.get_compiler('cpp').find_library('z', required: true)
 sdbusplus = dependency('sdbusplus', required: true)
 cppzmq = dependency('cppzmq', required: true)
 tbb = dependency('tbb', required: true)
+libconfigpp = dependency('libconfig++', required: true)
 drogon = dependency('Drogon', method: 'cmake',
   modules: ['Drogon::Drogon'],required: true, static: false)
 
@@ -41,7 +42,8 @@ executable('rpi-fan-serve', dbus_source_files + source_files,
 	argparse,
 	sdbusplus,
 	cppzmq,
-	tbb
+	tbb,
+	libconfigpp
   ],
   install : true)
 

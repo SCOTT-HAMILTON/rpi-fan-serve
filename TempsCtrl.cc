@@ -19,18 +19,29 @@
 TempsCtrl::TempsCtrl() :
 	drogon::HttpController<TempsCtrl>(),
 	cacheTimer(),
+	saveConfigTimer(),
 	/* m_cacheLifeExpectancySeconds(2*3600) */
-	m_cacheLifeExpectancySeconds(1'000),
-	m_ctrlDbusServer(*this)
+	m_cacheLifeExpectancySeconds(
+				PermanentConfig::DefaultConfig.cache_life_expectancy),
+	m_ctrlDbusServer(*this),
+	lastConfigSave(std::chrono::steady_clock::now())
 {
 	{
 		using namespace PermanentConfig;
-		PermConfig config;
-		if (!load_config(config)) {
-			std::cerr << "[error] couldn't load config...\n";
+		if (auto lrv = load_config(m_config); lrv != LOAD_SUCCESS) {
+			m_config = DefaultConfig;
+			if (lrv == NO_CONFIG) {
+				std::cerr << "[log] config file doesn't exist,"
+						  << " creating default config...\n";
+				std::lock_guard<std::mutex> guard(saveConfigMutex);
+				save_config(m_config, PermanentConfig::configFilePath());
+			} else {
+				std::cerr << "[error] couldn't load config...\n";
+			}
 		} else {
 			std::cerr << "[log] config loaded successfully : "
-					  << config << '\n';
+					  << m_config << '\n';
+			m_cacheLifeExpectancySeconds = m_config.cache_life_expectancy;
 		}
 	}
 	cache.creationEpochMinutes = 0;
@@ -183,7 +194,7 @@ Json::Value TempsCtrl::logFile2Json(const std::string& file) {
 	ifs.seekg(0, std::ios::end);
 	auto end = ifs.tellg();
 	ifs.seekg(0, std::ios::beg);
-    auto chunk_size = std::size_t(end - ifs.tellg())/Config::maxjobs;
+    auto chunk_size = std::size_t(end - ifs.tellg())/SharedConfig::maxjobs;
     if (chunk_size == 0) {
 		std::cerr << "[error] file " << file << " is empty\n";
         return jsonError("Log file is empty."); 
@@ -221,7 +232,7 @@ Json::Value TempsCtrl::logFile2Json(const std::string& file) {
 }
 
 std::string TempsCtrl::offset2LogFilePath(size_t dayOffset) {
-	std::string logFilePath(Config::logFilePath);
+	std::string logFilePath(SharedConfig::logFilePath);
 	if (dayOffset > 0) {
 		logFilePath += "."+std::to_string(dayOffset);
 	}
@@ -263,6 +274,13 @@ void TempsCtrl::setCacheTimer() {
 			std::cerr << "[log] timer update disabled, cache is still valid.\n";
 		}
 	}, cacheTimerInterval);
+}
+
+void TempsCtrl::setSaveConfigTimer(int ms) {
+	auto timeout = std::max(ms, 1'000);
+	saveConfigTimer.setTimeout([&]() {
+		saveCurrentConfig(false);
+	}, timeout);
 }
 
 void TempsCtrl::updateCache() {
@@ -376,9 +394,31 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 }
 
 void TempsCtrl::setCacheLifeExpectancy(int seconds) {
+	std::lock_guard<std::mutex> guard(setCLEMutex);
 	std::cerr << "[log] changed cache life expectancy "
 			  << m_cacheLifeExpectancySeconds << " -> "
 			  << seconds << '\n';
 	m_cacheLifeExpectancySeconds = seconds;
+	m_config.cache_life_expectancy = m_cacheLifeExpectancySeconds;
+	saveCurrentConfig();
 	setCacheTimer();
+}
+
+void TempsCtrl::saveCurrentConfig(bool check_delay) {
+	auto now = std::chrono::steady_clock::now();
+	auto durationMs =
+		std::chrono::duration_cast<std::chrono::milliseconds>
+			(now - lastConfigSave).count();
+	if (check_delay) {
+		std::lock_guard<std::mutex> guard(saveConfigMutex);
+		if (durationMs < MAX_DELAY_BETWEEN_SAVES_MS) {
+			setSaveConfigTimer(MAX_DELAY_BETWEEN_SAVES_MS - durationMs);
+		} else {
+			lastConfigSave = now;
+			save_config(m_config, PermanentConfig::configFilePath());
+		}
+	} else {
+		lastConfigSave = now;
+		save_config(m_config, PermanentConfig::configFilePath());
+	}
 }

@@ -31,6 +31,7 @@ in with drogon1_7_2Pkgs; mkShell {
     zeromq
     tbb
     systemd
+    libconfig
   ];
   shellHook = ''
     export CXX=clang++

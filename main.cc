@@ -9,9 +9,9 @@
 #include <filesystem>
 #include <time.h>
 
-size_t Config::port = 0;
-std::string Config::logFilePath = "";
-size_t Config::maxjobs = 0;
+size_t SharedConfig::port = 0;
+std::string SharedConfig::logFilePath = "";
+size_t SharedConfig::maxjobs = 0;
 std::atomic_bool dbus_running(true);
 
 static void DBusTERMFunction(int sig)
@@ -114,10 +114,10 @@ int main(int argc, const char* argv[]) {
 			std::cerr << "[error] max jobs should be in range [0;10'000] `" << maxJobsStr << "`\n";
 			return 1;
 		}
-		Config::port = port;
-		Config::logFilePath = logFilePath;
-		Config::maxjobs = maxjobs;
-		drogon::app().addListener("0.0.0.0", Config::port).run();
+		SharedConfig::port = port;
+		SharedConfig::logFilePath = logFilePath;
+		SharedConfig::maxjobs = maxjobs;
+		drogon::app().addListener("0.0.0.0", SharedConfig::port).run();
 	} else {
 		{
 			struct sigaction sa;
