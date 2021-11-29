@@ -1,5 +1,6 @@
 #include "TempsCtrl.h"
 #include "SharedConfig.hpp"
+#include "configuration.hpp"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -22,6 +23,16 @@ TempsCtrl::TempsCtrl() :
 	m_cacheLifeExpectancySeconds(1'000),
 	m_ctrlDbusServer(*this)
 {
+	{
+		using namespace PermanentConfig;
+		PermConfig config;
+		if (!load_config(config)) {
+			std::cerr << "[error] couldn't load config...\n";
+		} else {
+			std::cerr << "[log] config loaded successfully : "
+					  << config << '\n';
+		}
+	}
 	cache.creationEpochMinutes = 0;
 	updateCache();
 	setCacheTimer();
