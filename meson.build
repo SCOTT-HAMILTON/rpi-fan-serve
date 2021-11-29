@@ -1,4 +1,4 @@
-project('rpi-fan-serve', 'cpp')
+project('rpi-fan-serve', 'cpp', default_options : ['cpp_std=c++17'])
 
 cares = dependency('libcares', required: true)
 openssl = dependency('openssl', required: true)

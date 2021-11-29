@@ -30,6 +30,11 @@ with drogon1_7_2Pkgs; callPackage (
 , openssl
 , sdbusplus
 , systemd
+, tbb
+, cppzmq
+, zeromq
+, libconfig
+, argparse
 , nix-gitignore
 }:
 
@@ -40,8 +45,20 @@ stdenv.mkDerivation rec {
   src = nix-gitignore.gitignoreSource [] ./.;
 
   nativeBuildInputs = [ meson ninja cmake pkg-config ];
-  buildInputs = [ drogon jsoncpp c-ares openssl sdbusplus systemd ];
+  buildInputs = [
+    drogon
+    jsoncpp
+    c-ares
+    openssl
+    sdbusplus
+    systemd
+    tbb
+    cppzmq
+    zeromq
+    libconfig
+    argparse
+  ];
 }) {
-  inherit (shamilton) sdbusplus;
+  inherit (shamilton) sdbusplus argparse;
   drogon = patchedDrogon;
 }

@@ -25,6 +25,7 @@ in with drogon1_7_2Pkgs; mkShell {
     openssl
     pkg-config
     sqlite
+    localShamilton.argparse
     localShamilton.sdbusplus
     localShamilton.sdbusplus-tools
     cppzmq
