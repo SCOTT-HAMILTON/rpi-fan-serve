@@ -11,6 +11,7 @@
 
 
 
+
 #ifndef SDBUSPP_NEW_CAMELCASE
 #define SDBUSPP_NEW_CAMELCASE 1
 #endif
@@ -65,6 +66,16 @@ class RpiFanServe
                      bool skipSignal = false);
 
 
+        /** @brief Implementation for SetCacheLifeExpectancy
+         *  Changes the cache life expectancy
+         *
+         *  @param[in] value - The new cache life expectancy in seconds.
+         *
+         *  @return updatedValue[int64_t] - The new updated cache life expectancy in seconds.
+         */
+        virtual int64_t setCacheLifeExpectancy(
+            int64_t value) = 0;
+
 
         /** @brief Send signal 'CacheUpdated'
          *
@@ -111,6 +122,11 @@ class RpiFanServe
         static constexpr auto interface = "org.scotthamilton.RpiFanServe";
 
     private:
+
+        /** @brief sd-bus callback for SetCacheLifeExpectancy
+         */
+        static int _callback_SetCacheLifeExpectancy(
+            sd_bus_message*, void*, sd_bus_error*);
 
         /** @brief sd-bus callback for get-property 'CacheLifeExpectancy' */
         static int _callback_get_CacheLifeExpectancy(

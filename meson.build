@@ -22,6 +22,8 @@ if not argparse.found()
   argparse = argparse_proj.dependency('argparse')
 endif
 
+subdir('tools')
+
 source_files = [ 'main.cc', 'TempsCtrl.cc' ]
 dbus_source_files = [
   'org/scotthamilton/RpiFanServe/error.cpp',
@@ -48,11 +50,5 @@ executable('rpi-fan-serve', dbus_source_files + source_files,
   install : true)
 
 datadir = get_option('datadir')
-conf_data = configuration_data()
-conf_data.set('bindir', get_option('prefix') / get_option('bindir'))
-desktop_file = configure_file(
-	  input : 'dbus/org.scotthamilton.rpifanserve.service.in',
-	  output : 'org.scotthamilton.rpifanserve.service',
-	  configuration : conf_data,
-	  install: true,
-	  install_dir: join_paths(datadir, 'dbus-1', 'services'))
+subdir('dbus')
+subdir('test')

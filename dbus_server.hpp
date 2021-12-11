@@ -36,10 +36,13 @@ struct RpiFanServe : RpiFanServe_inherit
 			int64_t value,
 			bool skipSignal) override
 	{
-		return cacheLifeExpectancy(value);
+		return setCacheLifeExpectancy(value);
 	}
 	int64_t cacheLifeExpectancy(int64_t value) override
 	{
+		return setCacheLifeExpectancy(value);
+    }
+	int64_t setCacheLifeExpectancy(int64_t value) override {
         using sdbusplus::org::scotthamilton::RpiFanServe::Error::InvalidCacheLifeExpectancy;
         if (value <= 60)
         {
@@ -50,7 +53,8 @@ struct RpiFanServe : RpiFanServe_inherit
 		m_cacheLifeExpectancy = value;
 		m_newCacheLifeExpectancyCb(m_cacheLifeExpectancy);
         return m_cacheLifeExpectancy;
-    }
+	}
+
 };
 
 class DbusServer {
@@ -105,7 +109,7 @@ private:
 
 		// Create a new bus and affix an object manager for the subtree path we
 		// intend to place objects at..
-		auto b = sdbusplus::bus::new_default();
+		auto b = sdbusplus::bus::new_default_system();
 		sdbusplus::server::manager_t m{b, path};
 
 		// Reserve the dbus service name : org.scotthamilton.RpiFanServe

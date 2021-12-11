@@ -9,6 +9,7 @@
 
 #include <org/scotthamilton/RpiFanServe/server.hpp>
 
+
 #include <org/scotthamilton/RpiFanServe/error.hpp>
 
 
@@ -38,6 +39,39 @@ RpiFanServe::RpiFanServe(bus_t& bus, const char* path,
     }
 }
 
+
+int RpiFanServe::_callback_SetCacheLifeExpectancy(
+        sd_bus_message* msg, void* context, sd_bus_error* error)
+{
+    auto o = static_cast<RpiFanServe*>(context);
+
+    {
+        return sdbusplus::sdbuspp::method_callback(
+                msg, o->_intf, error,
+                std::function(
+                    [=](int64_t&& value)
+                    {
+                        return o->setCacheLifeExpectancy(
+                                value);
+                    }
+                ));
+    }
+
+    return 0;
+}
+
+namespace details
+{
+namespace RpiFanServe
+{
+static const auto _param_SetCacheLifeExpectancy =
+        utility::tuple_to_array(message::types::type_id<
+                int64_t>());
+static const auto _return_SetCacheLifeExpectancy =
+        utility::tuple_to_array(message::types::type_id<
+                int64_t>());
+}
+}
 
 
 void RpiFanServe::cacheUpdated(
@@ -174,6 +208,13 @@ auto RpiFanServe::getPropertyByName(const std::string& _name) ->
 
 const vtable_t RpiFanServe::_vtable[] = {
     vtable::start(),
+
+    vtable::method("SetCacheLifeExpectancy",
+                   details::RpiFanServe::_param_SetCacheLifeExpectancy
+                        .data(),
+                   details::RpiFanServe::_return_SetCacheLifeExpectancy
+                        .data(),
+                   _callback_SetCacheLifeExpectancy),
 
     vtable::signal("CacheUpdated",
                    details::RpiFanServe::_signal_CacheUpdated

@@ -1,5 +1,19 @@
 description: >
     An interface to control the rpi-fan-serve service.
+methods:
+    - name: SetCacheLifeExpectancy
+      description: >
+        Changes the cache life expectancy
+      parameters:
+        - name: value
+          type: int64
+          description: >
+            The new cache life expectancy in seconds.
+      returns:
+        - name: updated_value
+          type: int64
+          description: >
+            The new updated cache life expectancy in seconds.
 properties:
     - name: CacheLifeExpectancy
       type: int64

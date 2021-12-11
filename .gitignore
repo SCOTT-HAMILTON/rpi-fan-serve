@@ -1,3 +1,5 @@
+test/test.nix
+test/out
 result*
 build/
 

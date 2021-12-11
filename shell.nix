@@ -43,10 +43,10 @@ in with drogon1_7_2Pkgs; mkShell {
       sdbus++ error exception-header org.scotthamilton.RpiFanServe > org/scotthamilton/RpiFanServe/error.hpp
     }
     run(){
-      ./build/rpi-fan-serve -p 8888 -l test/rpi-fan/rpi-fan.log -j 4
+      sudo ./build/rpi-fan-serve -p 8888 -l test/rpi-fan/rpi-fan.log -j 4
     }
     run_dbus(){
-      ./build/rpi-fan-serve --dbus
+      sudo ./build/rpi-fan-serve --dbus
     }
     compile(){
       meson compile -C build
@@ -57,12 +57,24 @@ in with drogon1_7_2Pkgs; mkShell {
         -ex 'run -p 8888 -l test/rpi-fan/rpi-fan.log -j 4'
     }
     send_dbus(){
-      dbus-send --session --dest=org.scotthamilton.RpiFanServe \
+      sudo busctl set-property org.scotthamilton.RpiFanServe /org/scotthamilton/rpifanserver org.scotthamilton.RpiFanServe CacheLifeExpectancy x $1
+    }
+    send_dbus2(){
+      sudo dbus-send --system --dest=org.scotthamilton.RpiFanServe \
         --print-reply /org/scotthamilton/rpifanserver \
         org.freedesktop.DBus.Properties.Set \
           string:org.scotthamilton.RpiFanServe \
           string:CacheLifeExpectancy \
           variant:int64:$1
+    }
+    introspect() {
+      dbus-send --system --dest=org.scotthamilton.RpiFanServe \
+        --print-reply /org/scotthamilton/rpifanserver \
+        org.freedesktop.DBus.Introspectable.Introspect
+    }
+    dbus_monitor() {
+      sudo busctl monitor org.scotthamilton.RpiFanServe \
+        --full --verbose
     }
   '';
 }
