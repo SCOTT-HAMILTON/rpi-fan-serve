@@ -16,7 +16,7 @@ let
     ];
   });
 in
-with drogon1_7_2Pkgs; callPackage (
+with drogon1_7_2Pkgs; libsForQt5.callPackage (
 { lib
 , stdenv
 , fetchFromGitHub
@@ -36,6 +36,7 @@ with drogon1_7_2Pkgs; callPackage (
 , libconfig
 , argparse
 , nix-gitignore
+, qtbase
 }:
 
 stdenv.mkDerivation rec {
@@ -44,7 +45,7 @@ stdenv.mkDerivation rec {
 
   src = nix-gitignore.gitignoreSource [] ./.;
 
-  nativeBuildInputs = [ meson ninja cmake pkg-config ];
+  nativeBuildInputs = [ meson ninja cmake pkg-config qtbase ];
   buildInputs = [
     drogon
     jsoncpp
@@ -57,7 +58,9 @@ stdenv.mkDerivation rec {
     zeromq
     libconfig
     argparse
+    qtbase
   ];
+  dontWrapQtApps = true;
 }) {
   inherit (shamilton) sdbusplus argparse;
   drogon = patchedDrogon;

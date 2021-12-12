@@ -33,6 +33,7 @@ in with drogon1_7_2Pkgs; mkShell {
     tbb
     systemd
     libconfig
+    libsForQt5.qtbase
   ];
   shellHook = ''
     export CXX=clang++
@@ -46,7 +47,7 @@ in with drogon1_7_2Pkgs; mkShell {
       sudo ./build/rpi-fan-serve -p 8888 -l test/rpi-fan/rpi-fan.log -j 4
     }
     run_dbus(){
-      sudo ./build/rpi-fan-serve --dbus
+      sudo ./build/dbus/rpi-fan-serve-dbus
     }
     compile(){
       meson compile -C build

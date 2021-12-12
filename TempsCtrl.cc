@@ -23,7 +23,6 @@ TempsCtrl::TempsCtrl() :
 	/* m_cacheLifeExpectancySeconds(2*3600) */
 	m_cacheLifeExpectancySeconds(
 				PermanentConfig::DefaultConfig.cache_life_expectancy),
-	m_ctrlDbusServer(*this),
 	lastConfigSave(std::chrono::steady_clock::now())
 {
 	{
@@ -47,7 +46,6 @@ TempsCtrl::TempsCtrl() :
 	cache.creationEpochMinutes = 0;
 	updateCache();
 	setCacheTimer();
-	m_ctrlDbusServer.start();
 }
 
 Json::Value jsonError(const std::string& errorMsg) {

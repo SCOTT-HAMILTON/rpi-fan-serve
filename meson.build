@@ -14,6 +14,7 @@ tbb = dependency('tbb', required: true)
 libconfigpp = dependency('libconfig++', required: true)
 drogon = dependency('Drogon', method: 'cmake',
   modules: ['Drogon::Drogon'],required: true, static: false)
+libstdcppfs = meson.get_compiler('cpp').find_library('stdc++fs', required: true)
 
 argparse = dependency('argparse', required: get_option('USE_SYSTEM_ARGPARSE'))
 if not argparse.found()
@@ -24,13 +25,12 @@ endif
 
 subdir('tools')
 
-source_files = [ 'main.cc', 'TempsCtrl.cc' ]
-dbus_source_files = [
-  'org/scotthamilton/RpiFanServe/error.cpp',
-  'org/scotthamilton/RpiFanServe/server.cpp'
+source_files = [
+  'main.cc',
+  'TempsCtrl.cc',
 ]
 
-executable('rpi-fan-serve', dbus_source_files + source_files,
+executable('rpi-fan-serve', source_files,
   dependencies : [
 	zlib,
 	libdl,
@@ -45,7 +45,8 @@ executable('rpi-fan-serve', dbus_source_files + source_files,
 	sdbusplus,
 	cppzmq,
 	tbb,
-	libconfigpp
+	libconfigpp,
+	libstdcppfs
   ],
   install : true)
 
