@@ -3,7 +3,7 @@
 #include <signal.h>
 #include "SignalHandler.h"
 #include "dbus_server.h"
-#include "../socket_locker.h"
+#include "../socket_locker.hpp"
 
 // true on success, false on error
 static bool setup_unix_signal_handlers()

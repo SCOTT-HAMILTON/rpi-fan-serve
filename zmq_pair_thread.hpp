@@ -14,18 +14,20 @@ public:
     virtual ~ZmqPairThread() {
 		stop();
 	}
-	void log(const std::string& msg) const {
+	void log(const std::string& msg) const noexcept {
 		std::cerr << "[log|" << logTag << "] " << msg << '\n';
 	}
-	void start() {
+	void start() noexcept {
 		log("starting client...");
 		m_thread = std::make_unique<std::thread>(&ZmqPairThread::run, this);
 	}
-	void stop() {
+	void stop() noexcept {
 		log("stopping client...");
 		m_running.store(false);
 		if (m_thread) {
-			m_thread->join();
+			if (m_thread->joinable()) {
+				m_thread->join();
+			}
 			m_thread.reset();
 		}
 	}

@@ -5,6 +5,7 @@
 #include <mutex>
 #include "timercpp/timercpp.h"
 #include "configuration.hpp"
+#include "zmq_dbus_server.hpp"
 
 using namespace drogon;
 using Days = std::chrono::duration<long, std::ratio<86400>>;
@@ -24,6 +25,24 @@ struct DaysDataCache {
 class TempsCtrl: public drogon::HttpController<TempsCtrl>
 {
 
+	class CtrlDbusServer: public ZmqDbusServer {
+	public:
+		CtrlDbusServer(TempsCtrl& parent) : m_parent(parent) {}
+	protected:
+		void receiveCallback(const std::string& msg) override {
+			std::cerr << "[log|ZMQ-DBUS-server] from TempsCtrl received: `"
+					  << msg << "`\n";
+			auto pr = parse_message(msg);
+			try {
+				auto cle = std::get<CacheLifeExpectancyMessage>(pr);
+				m_parent.setCacheLifeExpectancy(cle.value);
+			} catch (const std::bad_variant_access& ex) {}
+		}
+		void trySendCallback(zmq::socket_t& socket) override {
+			/* std::cerr << "[debug] sending nothing but can access " << m_parent.m_cacheLifeExpectancySeconds << "\n"; */
+		}
+		TempsCtrl& m_parent;
+	};
 public:
 	TempsCtrl();
 	METHOD_LIST_BEGIN
@@ -50,6 +69,7 @@ private:
 	std::mutex cacheMutex;
 	Timer cacheTimer;
 	Timer saveConfigTimer;
+	CtrlDbusServer m_ctrlDbusServer;
 	unsigned long m_cacheLifeExpectancySeconds;
 	PermanentConfig::PermConfig m_config;
 	std::mutex saveConfigMutex;

@@ -10,7 +10,7 @@
 
 constexpr const char LOCK_FILE[] =   "/var/lock/rpi-fan-serve.socket.lock";
 constexpr const char DBUS_LOCK_FILE[] =   "/var/lock/rpi-fan-serve-dbus.socket.lock";
-constexpr const char SOCKET_FILE[] = "/run/rpi-fan-serve.sock";
+constexpr const char SOCKET_FILE[] = "/tmp/rpi-fan-serve.sock";
 constexpr const int LOCK_FILE_MODE = 0644;
 
 namespace fs = std::filesystem;
@@ -77,13 +77,8 @@ private:
 		return
 			((p & fs::perms::owner_read)   != fs::perms::none &&
 			 (p & fs::perms::owner_write)  != fs::perms::none &&
-			 (p & fs::perms::owner_exec)   == fs::perms::none &&
-			 (p & fs::perms::group_read)   != fs::perms::none &&
 			 (p & fs::perms::group_write)  == fs::perms::none &&
-			 (p & fs::perms::group_exec)   == fs::perms::none &&
-			 (p & fs::perms::others_read)  != fs::perms::none &&
-			 (p & fs::perms::others_write) == fs::perms::none &&
-			 (p & fs::perms::others_exec)  == fs::perms::none);
+			 (p & fs::perms::others_write) == fs::perms::none);
 	}
 	std::string perms_to_string(const fs::perms p) noexcept {
 		return std::string
@@ -189,12 +184,14 @@ private:
 			}
 		} else {
 			ec.clear();
-			if (!fs::is_regular_file(socket, ec)) {
+			if (!fs::is_socket(socket, ec)) {
 				if (ec.value() != 0) {
-					std::cerr << "[error] fs::is_regular_file('" << socket << "')"
+					std::cerr << "[error] fs::is_socket('" << socket << "')"
 							  << " failed with error code " << ec.value()
 							  << " : " << ec.message() << '\n';
 				}
+				std::cerr << "[debug] trying to delete " << socket
+						  << " because it's not a socket.\n";
 				try_delete(socket);
 				return try_create_socket(socket);
 			}

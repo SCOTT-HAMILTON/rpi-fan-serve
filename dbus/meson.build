@@ -2,12 +2,16 @@ qt5 = import('qt5')
 qt5_dep = dependency('qt5',
   modules: [ 'Core', 'DBus' ], required: true)
 
-dependencies = [ qt5_dep, libstdcppfs ]
+thread_dep = dependency('threads')
+
+dependencies = [ qt5_dep, libstdcppfs, thread_dep, tbb, cppzmq ]
 
 moc_files = qt5.preprocess(moc_headers : 
 	   [ 'dbus_adaptor.h', 
 		 'dbus_proxy.h',
 		 'RpiFanServeObject.h',
+		 'zmq_pair_qthread.hpp',
+		 'zmq_dbus_client.hpp',
 		 'dbus_server.h',
 		 'SignalHandler.h'
 	   ],

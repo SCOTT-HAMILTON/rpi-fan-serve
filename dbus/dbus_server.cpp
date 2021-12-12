@@ -4,7 +4,7 @@
 #include "dbus_server.h"
 
 DbusServer::DbusServer(QObject *parent)
-    : QObject(parent)
+    : QObject(parent), m_ctrlDbusClient(*this)
 {
     auto connection = QDBusConnection::systemBus();
 	if (!connection.isConnected()){
@@ -25,12 +25,19 @@ DbusServer::DbusServer(QObject *parent)
 	connect(m_object, &RpiFanServeObject::CacheLifeExpectancyChanged,
 			this, &DbusServer::onCacheLifeExpectancyChanged);
 	qDebug() << connection.lastError().message();
+	m_ctrlDbusClient.start();
 }
 
 DbusServer::~DbusServer()
 {}
 
 void DbusServer::onCacheLifeExpectancyChanged() {
+	auto newValue = m_adaptor->cacheLifeExpectancy();
 	qDebug() << "[log] new CacheLifeExpectancyChanged -> "
-			 << m_adaptor->cacheLifeExpectancy();
+			 << newValue;
+	m_ctrlDbusClient.queue_send(
+		ZmqConstants::NEW_CACHE_LIFE_EXPECTANCY_KEY
+			+ std::string(":")
+			+ std::to_string(newValue)
+	);
 }

@@ -1,6 +1,6 @@
 #include "SharedConfig.hpp"
 #include "utils.hpp"
-#include "socket_locker.h"
+#include "socket_locker.hpp"
 #include <argparse/argparse.hpp>
 #include <drogon/drogon.h>
 #include <functional>

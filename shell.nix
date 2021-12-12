@@ -53,9 +53,14 @@ in with drogon1_7_2Pkgs; mkShell {
       meson compile -C build
     }
     debug(){
-      gdb ./build/rpi-fan-serve \
+      sudo gdb ./build/rpi-fan-serve \
         -ex 'handle SIGINT pass' \
         -ex 'run -p 8888 -l test/rpi-fan/rpi-fan.log -j 4'
+    }
+    debug_dbus(){
+      sudo gdb ./build/dbus/rpi-fan-serve-dbus \
+        -ex 'handle SIGINT pass' \
+        -ex 'run'
     }
     send_dbus(){
       sudo busctl set-property org.scotthamilton.RpiFanServe /org/scotthamilton/rpifanserver org.scotthamilton.RpiFanServe CacheLifeExpectancy x $1
