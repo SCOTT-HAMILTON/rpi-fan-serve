@@ -50,6 +50,11 @@ TempsCtrl::TempsCtrl() :
 	m_ctrlDbusServer.start();
 }
 
+
+TempsCtrl::~TempsCtrl() {
+	m_ctrlDbusServer.stop();
+}
+
 Json::Value jsonError(const std::string& errorMsg) {
 	Json::Value value;
 	value["type"] = "Error";

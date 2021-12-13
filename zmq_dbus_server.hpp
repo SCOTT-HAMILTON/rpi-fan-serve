@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "zmq_pair_thread.hpp"
 #include "socket_locker.hpp"
+#include "debug.hpp"
 
 namespace ZmqDbusServerData {
 	static const char TAG[] = "ZMQ-DBUS-server";
@@ -24,7 +25,7 @@ public:
 	};
 	enum None { NONE };
 	using ParseMessageResult = std::variant<CacheLifeExpectancyMessage, None>;
-	ParseMessageResult parse_message(const std::string& msg) {
+	static ParseMessageResult parse_message(const std::string& msg)  noexcept {
 		if (msg.substr(0, 5) == "NCLE:") {
 			auto valueStr = msg.substr(5, msg.size()-5);
 			try {
@@ -51,17 +52,23 @@ protected:
 		while (m_running) {
 			zmq::message_t msg(1024);
 			bool valid = false;
-			do {
-				zmq::recv_result_t r = sock.recv(msg, zmq::recv_flags::dontwait);
-				if (r) {
-					valid = true;
-					receiveCallback(msg.to_string());
-				} else {
-					valid = false;
-					trySendCallback(sock);
-					sleep_ms(10);
-				}
-			} while (valid);
+			{
+				do {
+					if (!m_running) {
+						break;
+					}
+					zmq::recv_result_t r = sock.recv(msg, zmq::recv_flags::dontwait);
+					if (r) {
+						valid = true;
+						receiveCallback(msg.to_string());
+						std::cerr << msg.to_string() << '\n';
+					} else {
+						valid = false;
+						trySendCallback(sock);
+						sleep_seconds(1);
+					}
+				} while (valid);
+			}
 		}
 		sock.close();
 		ctx.close();

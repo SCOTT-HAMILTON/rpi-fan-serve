@@ -12,7 +12,7 @@ static inline void sleep_seconds(int seconds) {
 
 static inline void sleep_ms(int ms) {
 	auto t = timespec{};
-	t.tv_sec = 0;
-	t.tv_nsec = ms*10^6;
+	t.tv_sec = ms / 1000;
+	t.tv_nsec = (ms % 1000) * 1000000L;
 	nanosleep(&t, NULL);
 }

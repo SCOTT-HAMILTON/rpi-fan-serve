@@ -32,7 +32,7 @@ class TempsCtrl: public drogon::HttpController<TempsCtrl>
 		void receiveCallback(const std::string& msg) override {
 			std::cerr << "[log|ZMQ-DBUS-server] from TempsCtrl received: `"
 					  << msg << "`\n";
-			auto pr = parse_message(msg);
+			auto pr = ZmqDbusServer::parse_message(msg);
 			try {
 				auto cle = std::get<CacheLifeExpectancyMessage>(pr);
 				m_parent.setCacheLifeExpectancy(cle.value);
@@ -45,6 +45,7 @@ class TempsCtrl: public drogon::HttpController<TempsCtrl>
 	};
 public:
 	TempsCtrl();
+	~TempsCtrl();
 	METHOD_LIST_BEGIN
 		ADD_METHOD_TO(TempsCtrl::handleTempsRequest,"/temps?dayOffset={1}",Get);
 		ADD_METHOD_TO(TempsCtrl::handleAllTempsRequest,"/all_temps",Get);
