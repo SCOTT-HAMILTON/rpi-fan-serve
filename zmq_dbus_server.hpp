@@ -59,7 +59,7 @@ protected:
 				} else {
 					valid = false;
 					trySendCallback(sock);
-					sleep_seconds(1);
+					sleep_ms(10);
 				}
 			} while (valid);
 		}
