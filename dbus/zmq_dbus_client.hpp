@@ -20,10 +20,9 @@ public:
 
 protected:
 	virtual void trySendCallback(zmq::socket_t& socket) = 0;
-	virtual void receiveCallback(const std::string& msg) = 0;
 	void run() override {
 		zmq::context_t ctx;
-		zmq::socket_t sock(ctx, zmq::socket_type::pair);
+		zmq::socket_t sock(ctx, zmq::socket_type::pub);
 		std::cerr << "[debug] connecting...\n";
 		try {
 			sock.connect(std::string("ipc://") + SOCKET_FILE);
@@ -32,22 +31,16 @@ protected:
 			sock.set(zmq::sockopt::linger, 0);
 			std::cerr << "[debug] connected.\n";
 			zmq::message_t msg;
-			sock.send(zmq::str_buffer("hello world from client!"), zmq::send_flags::dontwait);
-			sock.send(zmq::str_buffer("hello world from client!"), zmq::send_flags::dontwait);
+			sock.send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
+			sock.send(zmq::str_buffer("hello world from client!"));
 		} catch (const zmq::error_t& e) {
 			std::cerr << "[log|zmq-dbus-client] " << e.what() << "`\n";
 		}
 		while (m_running) {
 			zmq::message_t msg(1024);
 			try {
-				zmq::recv_result_t r = sock.recv(msg, zmq::recv_flags::dontwait);
-				if (r) {
-					std::cerr << "[log|ZMQ-DBUS-client] received: `" << msg << "`\n";
-					receiveCallback(msg.to_string());
-				} else {
-					trySendCallback(sock);
-					sleep_seconds(1);
-				}
+				trySendCallback(sock);
+				sleep_seconds(1);
 			} catch (const zmq::error_t& e) {
 				std::cerr << "[log|zmq-dbus-client] " << e.what() << "`\n";
 			}

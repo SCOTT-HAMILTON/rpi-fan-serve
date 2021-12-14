@@ -5,6 +5,7 @@
 #include <exception>
 #include <string>
 #include <zmq.hpp>
+#include <zmq_addon.hpp>
 #include "zmq_constants.hpp"
 #include "utils.hpp"
 #include "zmq_pair_thread.hpp"
@@ -45,7 +46,8 @@ protected:
 	virtual void receiveCallback(const std::string& msg) = 0;
 	void run() {
 		zmq::context_t ctx;
-		zmq::socket_t sock(ctx, zmq::socket_type::pair);
+		zmq::socket_t sock(ctx, zmq::socket_type::sub);
+		sock.set(zmq::sockopt::subscribe, "A");
 		sock.bind(std::string("ipc://") + SOCKET_FILE);
 		sock.set(zmq::sockopt::linger, 0);
 		zmq::message_t msg;
@@ -57,14 +59,16 @@ protected:
 					if (!m_running) {
 						break;
 					}
-					zmq::recv_result_t r = sock.recv(msg, zmq::recv_flags::dontwait);
+					std::vector<zmq::message_t> recv_msgs;
+					zmq::recv_result_t r =
+						zmq::recv_multipart(sock, std::back_inserter(recv_msgs),
+								zmq::recv_flags::dontwait);
 					if (r) {
 						valid = true;
-						receiveCallback(msg.to_string());
-						std::cerr << msg.to_string() << '\n';
+						receiveCallback(recv_msgs[1].to_string());
+						std::cerr << recv_msgs[1].to_string() << '\n';
 					} else {
 						valid = false;
-						trySendCallback(sock);
 						sleep_seconds(1);
 					}
 				} while (valid);

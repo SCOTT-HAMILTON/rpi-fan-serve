@@ -20,13 +20,11 @@ class DbusServer: public QObject
 			m_messages.push(msg);
 		}
 	protected:
-		void receiveCallback(const std::string& msg) override {
-			std::cerr << "[debug] lol received " << msg << '\n';
-		}
 		void trySendCallback(zmq::socket_t& socket) override {
 			while (m_messages.size() > 0) {
 				std::string msg;
 				if (m_messages.try_pop(msg)) {
+					socket.send(zmq::str_buffer("A"), zmq::send_flags::sndmore|zmq::send_flags::dontwait);
 					socket.send(zmq::buffer(msg), zmq::send_flags::dontwait);
 				}
 			}
