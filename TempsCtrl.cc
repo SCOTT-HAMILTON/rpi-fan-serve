@@ -348,7 +348,10 @@ bool TempsCtrl::isCacheExpired() const
 			<< ".\n";
 		return true;
 	} else {
-		if (currentEpoch >= cache.creationEpochMinutes+m_cacheLifeExpectancySeconds/60) {
+		if (currentEpoch >= 
+			static_cast<long int>(
+				cache.creationEpochMinutes+m_cacheLifeExpectancySeconds/60)) {
+
 			std::cerr << "[debug] ["
 				<< formatEpochMinutes(currentEpoch)
 				<< "] cache is expired, its last update was at "
@@ -380,7 +383,9 @@ bool TempsCtrl::isCacheNeedingUpdate() const
 	} else {
 		unsigned long cache_update_time_minutes = (m_cacheLifeExpectancySeconds/60L)*0.95;
 		std::cerr << "[debug] cache_update_time_minutes = " << cache_update_time_minutes << '\n';
-		if (currentEpoch >= cache.creationEpochMinutes+cache_update_time_minutes) {
+		if (currentEpoch >=
+				static_cast<long int>(
+				cache.creationEpochMinutes+cache_update_time_minutes)) {
 			std::cerr << "[debug] ["
 				<< formatEpochMinutes(currentEpoch)
 				<< "] cache needs update, its last update was at "

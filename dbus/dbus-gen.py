@@ -7,8 +7,6 @@ import shutil
 
 xml_file = sys.argv[1]
 basename = os.path.basename(xml_file)
-print(f"xml file = `{xml_file}`")
-print(f"xml file basename = `{basename}`")
 
 subprocess.check_call(
         [ "qdbusxml2cpp", "-p", "dbus_proxy", xml_file ]

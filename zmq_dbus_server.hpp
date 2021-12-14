@@ -13,10 +13,12 @@
 #include "debug.hpp"
 
 namespace ZmqDbusServerData {
-	static const char TAG[] = "ZMQ-DBUS-server";
+	constexpr const char TAG[] = "ZMQ-DBUS-server";
 }
 
-class ZmqDbusServer : public ZmqPairThread<ZmqDbusServerData::TAG> {
+using namespace ZmqDbusServerData;
+
+class ZmqDbusServer : public ZmqPairThread<TAG> {
 public:
     ZmqDbusServer() :
 		ZmqPairThread<ZmqDbusServerData::TAG>()

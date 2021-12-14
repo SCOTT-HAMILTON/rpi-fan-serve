@@ -8,12 +8,15 @@
 #include <filesystem>
 #include <iostream>
 
-constexpr const char LOCK_FILE[] =   "/var/lock/rpi-fan-serve.socket.lock";
-constexpr const char DBUS_LOCK_FILE[] =   "/var/lock/rpi-fan-serve-dbus.socket.lock";
-constexpr const char SOCKET_FILE[] = "/tmp/rpi-fan-serve.sock";
-constexpr const int LOCK_FILE_MODE = 0644;
+namespace SocketLockerConstants {
+	constexpr const char LOCK_FILE[] =   "/var/lock/rpi-fan-serve.socket.lock";
+	constexpr const char DBUS_LOCK_FILE[] =   "/var/lock/rpi-fan-serve-dbus.socket.lock";
+	constexpr const char SOCKET_FILE[] = "/tmp/rpi-fan-serve.sock";
+	constexpr const int LOCK_FILE_MODE = 0644;
+}
 
 namespace fs = std::filesystem;
+using namespace SocketLockerConstants;
 
 template <const char* lockFile>
 class SocketLocker {
@@ -48,7 +51,7 @@ private:
 	int m_lockFd;
 	void try_delete (const fs::path& path) noexcept {
 		std::error_code ec;
-		if (fs::remove_all(path, ec) == -1) {
+		if (fs::remove_all(path, ec) == static_cast<std::uintmax_t>(-1)) {
 			std::cerr << "[error] fs::remove_all('" << path << "')"
 					  << " failed with error code " << ec.value()
 					  << " : " << ec.message() << '\n';

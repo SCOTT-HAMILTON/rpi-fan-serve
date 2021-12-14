@@ -15,6 +15,16 @@ let
       })
     ];
   });
+  patchedMeson = with drogon1_7_2Pkgs; meson.overrideAttrs (old: rec {
+    pname = "patched-meson";
+    version = "0.58.1";
+    name = "${pname}-${version}";
+    src = python3Packages.fetchPypi {
+      inherit (old) pname;
+      inherit version;
+      sha256 = "0padn0ykwz8azqiwkhi8p97bl742y8lsjbv0wpqpkkrgcvda6i1i";
+    };
+  });
 in
 with drogon1_7_2Pkgs; libsForQt5.callPackage (
 { lib
@@ -64,4 +74,5 @@ stdenv.mkDerivation rec {
 }) {
   inherit (shamilton) sdbusplus argparse;
   drogon = patchedDrogon;
+  meson = patchedMeson;
 }
