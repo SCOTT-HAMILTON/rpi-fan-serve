@@ -26,6 +26,7 @@ TempsCtrl::TempsCtrl() :
 				PermanentConfig::DefaultConfig.cache_life_expectancy),
 	lastConfigSave(std::chrono::steady_clock::now())
 {
+	m_ctrlDbusServer.start();
 	{
 		using namespace PermanentConfig;
 		if (auto lrv = load_config(m_config); lrv != LOAD_SUCCESS) {
@@ -47,7 +48,6 @@ TempsCtrl::TempsCtrl() :
 	cache.creationEpochMinutes = 0;
 	updateCache();
 	setCacheTimer();
-	m_ctrlDbusServer.start();
 }
 
 

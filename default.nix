@@ -38,7 +38,6 @@ with drogon1_7_2Pkgs; libsForQt5.callPackage (
 , drogon
 , jsoncpp
 , openssl
-, sdbusplus
 , systemd
 , tbb
 , cppzmq
@@ -61,7 +60,6 @@ stdenv.mkDerivation rec {
     jsoncpp
     c-ares
     openssl
-    sdbusplus
     systemd
     tbb
     cppzmq
@@ -72,7 +70,7 @@ stdenv.mkDerivation rec {
   ];
   dontWrapQtApps = true;
 }) {
-  inherit (shamilton) sdbusplus argparse;
+  inherit (shamilton) argparse;
   drogon = patchedDrogon;
   meson = patchedMeson;
 }

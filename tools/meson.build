@@ -1,8 +1,13 @@
-source_files = [ 'rpi-fan-serve-ctrl.cc' ]
+source_files = [
+  'rpi-fan-serve-ctrl.cc',
+]
 
-executable('rpi-fan-serve-ctrl', source_files,
-  dependencies : [
-	argparse,
-	sdbusplus,
-  ],
+dependencies = [
+  argparse,
+  qt5_dep,
+]
+
+executable('rpi-fan-serve-ctrl',
+  source_files,
+  dependencies : dependencies,
   install : true)

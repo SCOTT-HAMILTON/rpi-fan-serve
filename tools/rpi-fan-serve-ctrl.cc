@@ -1,6 +1,12 @@
 #include <argparse/argparse.hpp>
+#include <QCoreApplication>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusVariant>
+#include <QDebug>
+#include <iostream>
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
 	argparse::ArgumentParser program("rpi-fan-serve-ctrl");
 	program.add_argument("-c", "--set-cache-life-expectancy")
 		.help("The new cache life expectancy in seconds");
@@ -35,5 +41,32 @@ int main(int argc, const char* argv[]) {
 		return 1;
 	}
 
-    return 0;
+    auto connection = QDBusConnection::systemBus();
+	if (!connection.isConnected()){
+		qDebug() << "[fatal] can't connect to D-Bus system bus";
+		qDebug() << connection.lastError().message();
+		return 1;
+	}
+	{
+		auto msg = QDBusMessage::createMethodCall(
+			"org.scotthamilton.RpiFanServe",
+			"/org/scotthamilton/rpifanserver",
+			"org.freedesktop.DBus.Properties",
+			"Set"
+		);
+		msg.setArguments(
+			QList {
+				QVariant("org.scotthamilton.RpiFanServe"),
+				QVariant("CacheLifeExpectancy"),
+				QVariant::fromValue(
+						QDBusVariant(QVariant(static_cast<qlonglong>(cle))))
+			}
+		);
+		auto reply = connection.call(msg, QDBus::Block, 1'000);
+		if (reply.type() == QDBusMessage::ErrorMessage) {
+			std::cout << "[error] "
+					  << reply.errorName().toStdString() << ": "
+					  << reply.errorMessage().toStdString() << std::endl;
+		}
+	}
 }

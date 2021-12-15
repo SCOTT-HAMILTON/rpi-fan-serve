@@ -36,8 +36,6 @@ in with drogon1_7_2Pkgs; mkShell {
     pkg-config
     sqlite
     localShamilton.argparse
-    localShamilton.sdbusplus
-    localShamilton.sdbusplus-tools
     cppzmq
     zeromq
     tbb
@@ -47,12 +45,6 @@ in with drogon1_7_2Pkgs; mkShell {
   ];
   shellHook = ''
     export CXX=clang++
-    update_dbus_files(){
-      sdbus++ interface server-cpp org.scotthamilton.RpiFanServe > org/scotthamilton/RpiFanServe/server.cpp
-      sdbus++ interface server-header org.scotthamilton.RpiFanServe > org/scotthamilton/RpiFanServe/server.hpp
-      sdbus++ error exception-cpp org.scotthamilton.RpiFanServe > org/scotthamilton/RpiFanServe/error.cpp
-      sdbus++ error exception-header org.scotthamilton.RpiFanServe > org/scotthamilton/RpiFanServe/error.hpp
-    }
     run(){
       sudo ./build/rpi-fan-serve -p 8888 -l test/rpi-fan/rpi-fan.log -j 4
     }

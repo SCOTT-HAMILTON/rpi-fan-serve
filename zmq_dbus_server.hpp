@@ -68,7 +68,6 @@ protected:
 					if (r) {
 						valid = true;
 						receiveCallback(recv_msgs[1].to_string());
-						std::cerr << recv_msgs[1].to_string() << '\n';
 					} else {
 						valid = false;
 						sleep_seconds(1);

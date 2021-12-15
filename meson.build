@@ -8,7 +8,6 @@ libbrotlienc = dependency('libbrotlienc', required: true)
 uuid = dependency('uuid', required: true)
 libdl = meson.get_compiler('cpp').find_library('dl', required: true)
 zlib = meson.get_compiler('cpp').find_library('z', required: true)
-sdbusplus = dependency('sdbusplus', required: true)
 cppzmq = dependency('cppzmq', required: true)
 tbb = dependency('tbb', required: true)
 libconfigpp = dependency('libconfig++', required: true)
@@ -22,6 +21,10 @@ if not argparse.found()
   argparse_proj = cmake.subproject('argparse')
   argparse = argparse_proj.dependency('argparse')
 endif
+
+qt5 = import('qt5')
+qt5_dep = dependency('qt5',
+  modules: [ 'Core', 'DBus' ], required: true)
 
 subdir('tools')
 
@@ -42,7 +45,6 @@ executable('rpi-fan-serve', source_files,
 	cares,
 	drogon,
 	argparse,
-	sdbusplus,
 	cppzmq,
 	tbb,
 	libconfigpp,
