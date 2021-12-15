@@ -10,7 +10,6 @@
 #include "utils.hpp"
 #include "zmq_pair_thread.hpp"
 #include "socket_locker.hpp"
-#include "debug.hpp"
 
 namespace ZmqDbusServerData {
 	constexpr const char TAG[] = "ZMQ-DBUS-server";
