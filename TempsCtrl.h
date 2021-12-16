@@ -29,7 +29,7 @@ class TempsCtrl: public drogon::HttpController<TempsCtrl>
 	public:
 		CtrlDbusServer(TempsCtrl& parent) : m_parent(parent) {}
 	protected:
-		void receiveCallback(const std::string& msg) override {
+		void receiveCallback(std::string_view msg) override {
 			std::cerr << "[log|ZMQ-DBUS-server] from TempsCtrl received: `"
 					  << msg << "`\n";
 			auto pr = ZmqDbusServer::parse_message(msg);
@@ -51,7 +51,7 @@ public:
 		ADD_METHOD_TO(TempsCtrl::handleAllTempsRequest,"/all_temps",Get);
 	METHOD_LIST_END
 	void handleTempsRequest(const HttpRequestPtr &req,
-			std::function<void (const HttpResponsePtr &)> &&callback, const std::string& dayOffset) const;
+			std::function<void (const HttpResponsePtr &)> &&callback, std::string dayOffset) const;
 	void updateCache();
 	void handleAllTempsRequest(const HttpRequestPtr &req,
 			std::function<void (const HttpResponsePtr &)> &&callback);
@@ -61,7 +61,7 @@ public:
 	void saveCurrentConfig(bool check_delay = true);
 
 private:
-	static Json::Value logFile2Json(const std::string& file);
+	static Json::Value logFile2Json(std::string file);
 	static std::string offset2LogFilePath(size_t dayOffset);
 	unsigned long getActiveLogFileCreationTimeMinutes() const;
 	void setCacheTimer();

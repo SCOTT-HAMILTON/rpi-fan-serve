@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#include <string>
 
 template <const char* logTag>
 class ZmqPairThread {
@@ -14,7 +15,7 @@ public:
     virtual ~ZmqPairThread() {
 		stop();
 	}
-	void log(const std::string& msg) const noexcept {
+	void log(std::string_view msg) const noexcept {
 		std::cerr << "[log|" << logTag << "] " << msg << '\n';
 	}
 	void start() noexcept {

@@ -131,7 +131,7 @@ namespace PermanentConfig {
 	// true on success, false on failure
 	bool parse_config_file(
 			PermConfig& config,
-			const std::string& configFile) noexcept {
+			std::string configFile) noexcept {
 		Config cfg;
 		try {
 			cfg.readFile(configFile);
@@ -174,7 +174,7 @@ namespace PermanentConfig {
 	}
 	bool save_config(
 				const PermConfig& config,
-				const std::string& configFile) noexcept {
+				std::string configFile) noexcept {
 		std::error_code ec;
 		if (!fs::exists(configFile, ec)) {
 			if (ec.value() != 0) {

@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <tbb/concurrent_queue.h>
+#include <string>
 #include "RpiFanServeObject.h"
 #include "dbus_proxy.h"
 #include "dbus_adaptor.h"
@@ -16,8 +17,8 @@ class DbusServer: public QObject
 		CtrlDbusClient(DbusServer& parent) :
 			ZmqDbusClient(),
 			m_parent(parent) {}
-		void queue_send(const std::string& msg) {
-			m_messages.push(msg);
+		void queue_send(std::string_view msg) {
+			m_messages.push(std::string(msg.data(), msg.size()));
 		}
 	protected:
 		void trySendCallback(zmq::socket_t& socket) override {

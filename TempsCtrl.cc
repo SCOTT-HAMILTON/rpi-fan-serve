@@ -55,13 +55,13 @@ TempsCtrl::~TempsCtrl() {
 	m_ctrlDbusServer.stop();
 }
 
-Json::Value jsonError(const std::string& errorMsg) {
+Json::Value jsonError(std::string errorMsg) {
 	Json::Value value;
 	value["type"] = "Error";
 	value["message"] = errorMsg;
 	return value;
 }
-HttpResponsePtr jsonErrorResponse(const std::string& errorMsg) {
+HttpResponsePtr jsonErrorResponse(std::string errorMsg) {
 	return HttpResponse::newHttpJsonResponse(
 		jsonError(errorMsg)
 	);
@@ -70,7 +70,7 @@ HttpResponsePtr jsonErrorResponse(const std::string& errorMsg) {
 void TempsCtrl::handleTempsRequest(
 		const HttpRequestPtr &req,
 		std::function<void (const HttpResponsePtr &)> &&callback,
-		const std::string& dayOffset) const
+		std::string dayOffset) const
 {
 	size_t intDayOffset = 0;
 	try {
@@ -94,7 +94,7 @@ void TempsCtrl::handleTempsRequest(
 	}
 }
 
-inline std::string getFirstMatch(const std::string& line, const std::regex& regex) {
+inline std::string getFirstMatch(std::string line, const std::regex& regex) {
 	std::sregex_iterator it(line.begin(), line.end(), regex);
 	std::sregex_iterator end;
 	if (it != end) {
@@ -119,7 +119,7 @@ inline Json::Value TempDataPoint2Json(const TempDataPoint& data) {
 	value["level"] = data.level;
 	return value;
 }
-inline bool extractMatches(const std::string& line, TempDataPoint& result) {
+inline bool extractMatches(std::string line, TempDataPoint& result) {
 	const std::regex dateRegex(
 		"^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z)?");
 	const std::regex tempRegex("with [0-9]*°C");
@@ -191,7 +191,7 @@ Json::Value linesChunk2TempsChunk(const std::vector<std::string>& linesChunk) {
 	}
 	return chunk_temps; 
 }
-Json::Value TempsCtrl::logFile2Json(const std::string& file) {
+Json::Value TempsCtrl::logFile2Json(std::string file) {
 	std::ifstream ifs(file);
     if(!ifs) {
         throw std::runtime_error(file + ": " + std::strerror(errno));

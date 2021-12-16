@@ -27,12 +27,13 @@ public:
 	};
 	enum None { NONE };
 	using ParseMessageResult = std::variant<CacheLifeExpectancyMessage, None>;
-	static ParseMessageResult parse_message(const std::string& msg)  noexcept {
+	static ParseMessageResult parse_message(std::string_view msg) noexcept {
 		if (msg.substr(0, 5) == "NCLE:") {
 			auto valueStr = msg.substr(5, msg.size()-5);
 			try {
 				CacheLifeExpectancyMessage r;
-				r.value = std::stoi(valueStr);
+				r.value = std::stoi(std::string(
+							valueStr.data(), valueStr.size()));
 				return ParseMessageResult(r);
 			} catch (std::exception& e) {
 				std::cerr << "[error] received invalid value"
@@ -44,7 +45,7 @@ public:
 
 protected:
 	virtual void trySendCallback(zmq::socket_t& socket) = 0;
-	virtual void receiveCallback(const std::string& msg) = 0;
+	virtual void receiveCallback(std::string_view msg) = 0;
 	void run() {
 		zmq::context_t ctx;
 		zmq::socket_t sock(ctx, zmq::socket_type::sub);
