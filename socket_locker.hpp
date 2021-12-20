@@ -8,20 +8,26 @@
 #include <filesystem>
 #include <iostream>
 
+namespace fs = std::filesystem;
 namespace SocketLockerConstants {
 	constexpr const char LOCK_FILE[] =   "/var/lock/rpi-fan-serve.socket.lock";
 	constexpr const char DBUS_LOCK_FILE[] =   "/var/lock/rpi-fan-serve-dbus.socket.lock";
-	constexpr const char SOCKET_FILE[] = "/tmp/rpi-fan-serve.sock";
+	constexpr const char SOCKET_DIR[] = "/run/rpi-fan-serve";
+	constexpr const char SOCKET_FILE[] = "rpi-fan-serve.sock";
 	constexpr const int LOCK_FILE_MODE = 0644;
+
+	static fs::path get_socket_file() noexcept {
+		return fs::path(SOCKET_DIR) / fs::path(SOCKET_FILE);
+	}
 }
 
-namespace fs = std::filesystem;
 using namespace SocketLockerConstants;
 
 template <const char* lockFile>
 class SocketLocker {
 public:
     SocketLocker() : m_lockFd(-1) {}
+
 	// Checks the socket and tries to lock
 	bool checkAndTryLock() noexcept {
 		if (m_lockFd != -1) {
@@ -49,12 +55,16 @@ public:
 	}
 private:
 	int m_lockFd;
-	void try_delete (const fs::path& path) noexcept {
+	// false on error, true on success
+	bool try_delete (const fs::path& path) noexcept {
 		std::error_code ec;
 		if (fs::remove_all(path, ec) == static_cast<std::uintmax_t>(-1)) {
 			std::cerr << "[error] fs::remove_all('" << path << "')"
 					  << " failed with error code " << ec.value()
 					  << " : " << ec.message() << '\n';
+			return false;
+		} else {
+			return true;
 		}
 	}
 	bool try_create_socket (const fs::path& socket) noexcept {
@@ -220,8 +230,57 @@ private:
 			return true;
 		}
 	}
+	// false on error, true on success
+	bool try_create_directory (const fs::path& path) {
+		std::error_code ec;
+		if (!fs::create_directory(path, ec)) {
+			if (ec.value() != 0) {
+				std::cerr << "[error] fs::create_directory('" << path << "')"
+						  << " failed with error code " << ec.value()
+						  << " : " << ec.message() << '\n';
+			}
+			return false;
+		} else {
+			return true;
+		}
+	}
+	// false on error, true on success
+	bool check_clean_dir (const fs::path& path) noexcept {
+		std::error_code ec;
+		if (!fs::exists(path, ec)) {
+			if (ec.value() != 0) {
+				std::cerr << "[error] fs::exists('" << path << "')"
+						  << " failed with error code " << ec.value()
+						  << " : " << ec.message() << '\n';
+			} else {
+				return try_create_directory(path);
+			}
+		} else {
+			ec.clear();
+			if (!fs::is_directory(path, ec)) {
+				if (ec.value() != 0) {
+					std::cerr << "[error] fs::is_directory('" << path << "')"
+							  << " failed with error code " << ec.value()
+							  << " : " << ec.message() << '\n';
+				}
+				if (try_delete(path)) {
+					return try_create_directory(path);
+				} else {
+					return false;
+				}
+			} else {
+				return true;
+			}
+		}
+		return true;
+	}
 	// Defaults to the SOCKET_FILE
 	inline bool check_clean_socket() noexcept {
-		return check_clean_socket(SOCKET_FILE);
+		auto socket_path = get_socket_file();
+		if (!check_clean_dir(SOCKET_DIR)) {
+			return false;
+		} else {
+			return check_clean_socket(socket_path);
+		}
 	}
 };

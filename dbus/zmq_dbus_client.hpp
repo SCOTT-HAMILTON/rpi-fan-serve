@@ -25,9 +25,12 @@ protected:
 		zmq::socket_t sock(ctx, zmq::socket_type::pub);
 		std::cerr << "[debug] connecting...\n";
 		try {
-			sock.connect(std::string("ipc://") + SOCKET_FILE);
+			sock.connect(std::string("ipc://") +
+					SocketLockerConstants::get_socket_file().native());
 			std::cerr << "[debug] connect URL: "
-					  << "ipc://" << SOCKET_FILE << '\n';
+					  << "ipc://"
+					  << SocketLockerConstants::get_socket_file().native()
+					  << '\n';
 			sock.set(zmq::sockopt::linger, 0);
 			std::cerr << "[debug] connected.\n";
 			zmq::message_t msg;

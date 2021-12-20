@@ -50,7 +50,8 @@ protected:
 		zmq::context_t ctx;
 		zmq::socket_t sock(ctx, zmq::socket_type::sub);
 		sock.set(zmq::sockopt::subscribe, "A");
-		sock.bind(std::string("ipc://") + SOCKET_FILE);
+		sock.bind(std::string("ipc://") +
+				SocketLockerConstants::get_socket_file().native());
 		sock.set(zmq::sockopt::linger, 0);
 		zmq::message_t msg;
 		while (m_running) {
